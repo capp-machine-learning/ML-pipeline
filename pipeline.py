@@ -3,16 +3,21 @@ Pipeline for Machine Learning Analysis.
 
 Si Young Byun (syb234)
 '''
+# pylint: disable=invalid-name, unused-variable, wrong-import-position
+
+import matplotlib.pyplot as plt
+import numpy as np
 import os
 import pandas as pd
 pd.set_option('display.max_colwidth', -1)
-import numpy as np
-import matplotlib.pyplot as plt
 import seaborn as sns
-import config
+
+from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier as DTC
-from sklearn.metrics import accuracy_score
+
+import config
+
 
 # Read Data
 
@@ -55,7 +60,7 @@ def view_variable_freq(df, variable):
     - variable: (string) variable name
     '''
     val_count = df[variable].value_counts()
-    
+
     print("Count of values in {}:\n\n{}\n".format(variable, val_count))
     ax = val_count.plot('bar', rot=0, figsize=(15, 5))
     ax.set(xlabel=variable, ylabel="Count")
@@ -73,7 +78,7 @@ def find_var_with_missing_values(df):
     nan = df.isna().sum()
     nan_perc = round(100 * nan / len(df.index), 2)
     nan_df = pd.concat([nan, nan_perc], axis=1)
-    nan_df = nan_df.rename(columns = {0: 'NaN', 1: 'Percent of NaN'})
+    nan_df = nan_df.rename(columns={0: 'NaN', 1: 'Percent of NaN'})
     nan_df = nan_df.sort_values(by=['Percent of NaN'], ascending=False)
     only_nan_df = nan_df[nan_df['NaN'] > 0]
     nan_vars = only_nan_df.index.tolist()
@@ -102,7 +107,7 @@ def generate_boxplots(df, columns):
     - boxplots
     '''
     for column in columns:
-        
+
         fig, ax = plt.subplots(figsize=(15, 5))
         ax = sns.boxplot(x=df[column])
 
@@ -125,14 +130,14 @@ def generate_corr_heatmap(df):
     '''
     # compute correlation
     corr = df.corr()
-    
+
     # generate a mask for the upper triangle
     mask = np.zeros_like(corr, dtype=np.bool)
     mask[np.triu_indices_from(mask)] = True
-    
+
     # create figure and plot
     f, ax = plt.subplots(figsize=(15, 5))
-    
+
     # Generate a diverging colormap
     cp = sns.diverging_palette(220, 10, as_cmap=True)
     sns.heatmap(corr, mask=mask, annot=True, fmt='.2f', cmap=cp, linewidths=.5)
@@ -159,7 +164,7 @@ def find_iqr_outliers(df, column, weight=1.5):
     lowest = quantile_25 - iqr_weight
     highest = quantile_75 + iqr_weight
     outlier_ind = np.where((data < lowest) | (data > highest))
-        
+
     return outlier_ind
 
 
@@ -175,7 +180,7 @@ def visualize_outliers(df, columns):
         f, ax = plt.subplots(figsize=(15, 5))
         df.iloc[find_iqr_outliers(df, column)][column].hist(bins=25)
         plt.xlabel(column)
-    
+
     plt.show()
 
 
@@ -212,7 +217,7 @@ def drop_variable(df, columns):
     try:
         df.drop(labels=columns, axis=1, inplace=True)
 
-    except:
+    except KeyError:
         print("Unable to drop {}.".format(columns))
 
     else:
@@ -246,7 +251,7 @@ def generate_dummy(df, variable):
     dummy = pd.get_dummies(df[variable])
     merged_df = pd.concat([df, dummy], axis=1)
     merged_df = merged_df.drop(columns=[variable])
-    
+
     return merged_df
 
 # Build Classifier
@@ -282,8 +287,8 @@ def evaluate_decision_tree_model(decision_tree, X_test, y_test):
     - X_test, y_test: (pandas dataframe) test sets
     '''
     thold = config.PIPELINE_CONFIG['threshold']
-    calc_thold = lambda x,y: 0 if x < y else 1
-    pred_scores_test = decision_tree.predict_proba(X_test)[:,1]
+    calc_thold = lambda x, y: 0 if x < y else 1
+    pred_scores_test = decision_tree.predict_proba(X_test)[:, 1]
     pred_test = np.array([calc_thold(sc, thold) for sc in pred_scores_test])
     test_acc = accuracy_score(pred_test, y_test)
 
