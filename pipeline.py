@@ -9,6 +9,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import config
+from sklearn.model_selection import train_test_split
 
 # Read Data
 
@@ -171,8 +172,10 @@ def split_and_create_X_y_set(df, test_size=0.3, rand=10):
     y_df = df[config.PIPELINE_CONFIG['outcome_var']]
     X_train, X_test, y_train, y_test = train_test_split(X_df, y_df,
                                                         test_size=test_size,
-                                                        rand=random_state)
+                                                        random_state=rand)
 
     return X_train, X_test, y_train, y_test
+
+def train_decision_tree
 
 # Evaluate Classifier
