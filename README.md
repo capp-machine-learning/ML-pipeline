@@ -1,4 +1,4 @@
-# ML-pipeline
+# Delinquency-Analysis-Pipeline
 
 The goal of this assignment is to build a simple, modular, extensible, machine learning pipeline in Python. The pipeline should have functions that can do the following tasks:
 
