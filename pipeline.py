@@ -5,11 +5,14 @@ Si Young Byun (syb234)
 '''
 import os
 import pandas as pd
+pd.set_option('display.max_colwidth', -1)
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import config
 from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier as DTC
+from sklearn.metrics import accuracy_score
 
 # Read Data
 
@@ -42,6 +45,16 @@ def read_data(filename):
 
 
 # Explore Data
+
+def view_variable_dist(df, variable):
+    
+    val_count = df[variable].value_counts()
+    
+    print("Count of values in {}:\n\n{}\n".format(variable, val_count))
+    ax = val_count.plot('bar', rot=0, figsize=(15, 5))
+    ax.set(xlabel=variable, ylabel="Count")
+    plt.show()
+
 
 def find_var_with_missing_values(df):
     '''
@@ -142,18 +155,32 @@ def impute_missing_data(df, columns):
     for column in columns:
         if abs(df[column].kurt()) > 3:
             cond = df[column].median()
+            print("For {}, median is selected.".format(column))
         else:
             cond = df[column].mean()
+            print("For {}, mean is selected.".format(column))
         estimate = round(cond)
         df[column] = df[column].fillna(estimate)
 
     print("Imputation completed!")
 
+def drop_variable(df, columns):
+
+    try:
+        df.drop(labels=columns, axis=1, inplace=True)
+
+    except:
+        print("Unable to drop {}.".format(columns))
+
+    else:
+        print("{} are successfully dropped from the dataset".format(columns))
+
+
 # Generate Features/Predictors
 
 def discretize_variable(df, variable, bin_number, labels=None):
 
-    bin_name = variable + " cat"
+    bin_name = variable + "_cat"
     df[bin_name] = pd.cut(df[variable], bin_number, labels=labels)
 
 def generate_dummy(df, variable):
@@ -176,6 +203,27 @@ def split_and_create_X_y_set(df, test_size=0.3, rand=10):
 
     return X_train, X_test, y_train, y_test
 
-def train_decision_tree
 
 # Evaluate Classifier
+
+def evaluate_decision_tree_model(decision_tree, X_test, y_test):
+
+    thold = config.PIPELINE_CONFIG['threshold']
+    calc_thold = lambda x,y: 0 if x < y else 1
+    pred_scores_test = decision_tree.predict_proba(X_test)[:,1]
+    pred_test = np.array([calc_thold(sc, thold) for sc in pred_scores_test])
+    test_acc = accuracy_score(pred_test, y_test)
+
+    print("The calculated accuracy of this model is {:.4f}.".format(test_acc))
+
+
+def find_best_max_depth(X_train, y_train, X_test, y_test):
+
+    random_state = config.PIPELINE_CONFIG['random_state']
+
+    for i in range(1, 10):
+        dt = DTC(criterion='gini', max_depth=i, random_state=random_state)
+        dt.fit(X_train, y_train)
+        print('### max_depth: {}'.format(i))
+        evaluate_decision_tree_model(dt, X_test, y_test)
+        print('---------------')
